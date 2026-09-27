@@ -56,8 +56,13 @@ pip install pyserial
 python modbus_lens.py --port COM3 --baud 9600 [--reg-hi 999] [--probe 8]
 ```
 
-Scan speed over a real link is bounded by the bus (65535 registers at 9600
-baud is hours), so keep `--reg-hi` sane first; widen after the first map.
+- The full slave sweep (1-247) takes ~100 s at the default 0.4 s timeout;
+  progress is printed to stderr so silence doesn't look like a hang.
+- Register scan speed is bounded by the bus (65535 registers at 9600 baud
+  is hours), so keep `--reg-hi` sane first; widen after the first map.
+- Probing is a burst (N samples within a short window): minute-scale drift
+  will read as static. Corrupted frames (CRC mismatch) are skipped, never
+  fatal - a noisy link bends the map, it doesn't kill the scan.
 
 ## Hints
 

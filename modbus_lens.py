@@ -140,7 +140,10 @@ class SerialTransport:
             import serial  # pyserial
         except ImportError:
             raise SystemExit("error: serial mode needs pyserial: pip install pyserial")
-        self.ser = serial.Serial(port, baud, timeout=timeout)
+        try:
+            self.ser = serial.Serial(port, baud, timeout=timeout)
+        except serial.SerialException as e:
+            raise SystemExit("error: cannot open %s: %s" % (port, e))
         self.timeout = timeout
 
     def request(self, addr, func, payload):
@@ -148,10 +151,15 @@ class SerialTransport:
         self.ser.write(frame(addr, func, payload))
         # read header: addr + func (+ bytecount for reads)
         head = self._read_exact(2)
+        if head[0] != addr:
+            # late answer from a previous (slower) slave: it would be
+            # silently mis-attributed to this address - treat as no answer
+            self.ser.reset_input_buffer()
+            raise Timeout("answer from slave %d, expected %d" % (head[0], addr))
         if head[1] & 0x80:
             rest = self._read_exact(3)  # exception code + crc
             check_crc(head + rest)
-            raise ExceptionResponse(head[1], rest[0])
+            raise ExceptionResponse(head[1] & 0x7F, rest[0])
         bc = self._read_exact(1)[0]
         rest = self._read_exact(bc + 2)
         raw = head + bytes([bc]) + rest
@@ -174,14 +182,22 @@ class SerialTransport:
 
 def scan_slaves(tr, lo=1, hi=247, func=FUNC_READ_HOLDING):
     found = []
+    verbose = isinstance(tr, SerialTransport)
+    if verbose:
+        sys.stderr.write("scanning slaves %d-%d (worst case ~%d s at 0.4 s timeout)...\n"
+                         % (lo, hi, int((hi - lo + 1) * 0.4)))
     for addr in range(lo, hi + 1):
+        if verbose and (addr - lo) % 16 == 0:
+            sys.stderr.write("\rscanning... addr %d    " % addr)
         try:
             tr.request(addr, func, struct.pack(">HH", 0, 1))
             found.append(addr)
         except ExceptionResponse:
             found.append(addr)  # an exception still proves the slave is alive
-        except Timeout:
-            pass
+        except (Timeout, TransportError):
+            pass  # no answer or unusable frame: treat as absent
+    if verbose:
+        sys.stderr.write("\n")
     return found
 
 
@@ -197,6 +213,7 @@ def scan_registers(tr, slave, lo=0, hi=999, block=8, func=FUNC_READ_HOLDING):
     ranges = []
     range_start = None
     last_ok = None
+    block = max(1, min(125, block))  # RTU allows at most 125 regs per read
 
     def close():
         nonlocal range_start, last_ok
@@ -228,10 +245,10 @@ def scan_registers(tr, slave, lo=0, hi=999, block=8, func=FUNC_READ_HOLDING):
                     last_ok = a
                 except ExceptionResponse:
                     close()
-                except Timeout:
+                except (Timeout, TransportError):
                     close()
             addr += qty
-        except Timeout:
+        except (Timeout, TransportError):
             close()
             addr += qty
     close()
@@ -269,9 +286,9 @@ def value_hunch(lo, hi, mean):
     hunches = []
     if lo == hi:
         pass
-    elif 0 <= lo and hi <= 100:
+    elif hi <= 100:
         hunches.append("range fits 0-100 (percent?)")
-    elif 0 <= lo and hi <= 1000 and mean > 150:
+    elif hi <= 1000 and mean > 150:
         hunches.append("looks like x10 fixed-point (e.g. 250 -> 25.0)")
     if hi > 40000:
         hunches.append("uses high bits (bitfield or unsigned large)")
@@ -336,18 +353,22 @@ def main(argv=None):
     ap.add_argument("--slave-hi", type=int, default=247, help="slave scan upper bound (default 247)")
     ap.add_argument("--reg-lo", type=int, default=0, help="register scan lower bound (default 0)")
     ap.add_argument("--reg-hi", type=int, default=200, help="register scan upper bound (default 200)")
-    ap.add_argument("--probe", type=int, default=0, metavar="N",
-                    help="sample each register N times and classify (demo default: 8)")
+    ap.add_argument("--probe", type=int, default=None, metavar="N",
+                    help="sample each register N times and classify (demo default: 8, 0 disables)")
     ap.add_argument("--version", action="version", version="modbus-lens " + __version__)
     args = ap.parse_args(argv)
 
     if args.demo and args.port:
         ap.error("--demo and --port are mutually exclusive")
+    if not (1 <= args.slave_lo <= args.slave_hi <= 247):
+        ap.error("slave range must be within 1..247")
+    if not (0 <= args.reg_lo <= args.reg_hi <= 65535):
+        ap.error("register range must be within 0..65535")
     if not args.demo and not args.port:
         ap.error("give --port or --demo (try the demo first: modbus-lens --demo)")
 
     tr = DemoTransport() if args.demo else SerialTransport(args.port, args.baud)
-    if args.demo and not args.probe:
+    if args.demo and args.probe is None:
         args.probe = 8
     print(run_report(tr, args))
     return 0
