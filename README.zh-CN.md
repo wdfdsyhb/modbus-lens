@@ -18,3 +18,17 @@ python modbus_lens.py --port COM3 --baud 9600 --probe 8
 `--demo` 内置：1 号从站=温湿度传感器（温度湿度在动、固件版本/校准块静态），
 17 号从站=IO 模块。单文件、纯标准库（串口模式需 `pip install pyserial`），
 Python ≥ 3.9。MIT 许可。
+
+**默认只读**：所有总线操作都是读——功能码在代码层白名单锁定为 0x03/0x04
+（其余一律拒绝），不存在写寄存器的代码路径。工业总线上，这是底线。
+
+## Lens 系列
+
+modbus-lens 是 **Lens 系列**的一员——同一套理念：面对未知硬件与协议，只报告证据，不下断言。
+
+| 工具 | 领域 | 状态 |
+| --- | --- | --- |
+| [SerialLens](https://github.com/wdfdsyhb/SerialLens) | 串口 / UART 协议识别与解码 | ✅ 可用 |
+| **modbus-lens** | Modbus RTU 从站发现与寄存器侦察 | ✅ 可用 |
+| can-lens | CAN 总线流量画像 | 🚧 规划中 |
+| ble-lens | BLE GATT 服务侦察 | 💡 构想中 |

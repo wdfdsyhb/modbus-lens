@@ -147,6 +147,12 @@ class SerialTransport:
         self.timeout = timeout
 
     def request(self, addr, func, payload):
+        # read-only by design: reject any non-read function code before it
+        # can reach the wire. modbus-lens is a recon tool - it never writes.
+        if func not in (FUNC_READ_HOLDING, FUNC_READ_INPUT):
+            raise ValueError(
+                "modbus-lens is read-only: func 0x%02X rejected "
+                "(allowed: 0x03 read holding, 0x04 read input)" % func)
         self.ser.reset_input_buffer()
         self.ser.write(frame(addr, func, payload))
         # read header: addr + func (+ bytecount for reads)

@@ -14,6 +14,10 @@ python modbus_lens.py --demo                 # full workflow on virtual slaves, 
 python modbus_lens.py --port COM3 --baud 9600 --probe 8
 ```
 
+> **Safety by default**: every bus operation is a READ — function codes are
+> whitelisted to 0x03/0x04 in code (`_check_func` rejects anything else),
+> and there is no write path at all. On an industrial bus, that is the whole point.
+
 Demo output (trimmed):
 
 ```
@@ -70,6 +74,18 @@ python modbus_lens.py --port COM3 --baud 9600 [--reg-hi 999] [--probe 8]
 - `--slave-lo/--slave-hi`, `--reg-lo/--reg-hi` bound the scans
 - Probing reads are single-register; interleaved writes from other masters
   will show up as noise — that is evidence too
+
+## The Lens series
+
+modbus-lens is part of the **Lens series** — one philosophy: face unknown hardware and
+protocols, report only evidence, never claim certainty.
+
+| Tool | Domain | Status |
+| --- | --- | --- |
+| [SerialLens](https://github.com/wdfdsyhb/SerialLens) | Serial / UART protocol identification & decoding | ✅ available |
+| **modbus-lens** | Modbus RTU slave discovery & register recon | ✅ available |
+| can-lens | CAN bus traffic profiling | 🚧 planned |
+| ble-lens | BLE GATT service recon | 💡 idea |
 
 ## License
 
