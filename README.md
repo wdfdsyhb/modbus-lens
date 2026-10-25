@@ -1,6 +1,6 @@
 # modbus-lens · Modbus RTU 侦察器
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/wdfdsyhb/modbus-lens/actions/workflows/tests.yml/badge.svg)](https://github.com/wdfdsyhb/modbus-lens/actions/workflows/tests.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
 
 > 指向一个串口，它扫出哪些从站应答、哪些寄存器可读，再对寄存器逐个采样、给出基于证据的画像——全程只读，代码里不存在写路径。
