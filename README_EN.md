@@ -1,6 +1,6 @@
 # modbus-lens · Modbus RTU Reconnaissance
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/wdfdsyhb/modbus-lens/actions/workflows/tests.yml/badge.svg)](https://github.com/wdfdsyhb/modbus-lens/actions/workflows/tests.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
 
 > Point it at a serial port: it finds which Modbus RTU slaves answer, maps readable registers, and probes them for an evidence-based profile — read-only, with no write path at all.
