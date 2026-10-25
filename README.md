@@ -1,9 +1,11 @@
-# modbus-lens
+# modbus-lens · Modbus RTU 侦察器
 
-**Reconnaissance for unknown Modbus RTU devices.** Point it at a serial port
-(or run the built-in demo) and it discovers which slave addresses answer,
-maps readable register ranges, then probes them and reports what the
-*evidence* looks like — without ever claiming to know what a register means.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
+
+> 指向一个串口，它扫出哪些从站应答、哪些寄存器可读，再对寄存器逐个采样、给出基于证据的画像——全程只读，代码里不存在写路径。
+>
+> English: Point it at a serial port: it finds which Modbus RTU slaves answer, maps readable registers, and probes them for an evidence-based profile — read-only, with no write path at all.
 
 Sibling project of [SerialLens](https://github.com/wdfdsyhb/SerialLens)
 (same philosophy: face unknown hardware, report only evidence) and
@@ -90,3 +92,9 @@ protocols, report only evidence, never claim certainty.
 ## License
 
 MIT
+
+---
+
+## English
+
+Full English documentation: [README_EN.md](README_EN.md)
